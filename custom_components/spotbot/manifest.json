@@ -1,0 +1,13 @@
+{
+  "domain": "spotbot",
+  "name": "SpotBot",
+  "codeowners": ["@GITHUB-HANDLE-TODO"],
+  "config_flow": true,
+  "dependencies": ["application_credentials"],
+  "documentation": "https://github.com/GITHUB-ORG-TODO/SPOTBOT_HOMEASSISTANT",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/GITHUB-ORG-TODO/SPOTBOT_HOMEASSISTANT/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

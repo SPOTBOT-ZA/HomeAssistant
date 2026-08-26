@@ -1,0 +1,23 @@
+# NOTE: runs on the public GitHub mirror only. Needed because the Gitea
+# push-mirror syncs branches and TAGS, but never creates GitHub RELEASES —
+# and HACS versioning (and default-store inclusion) requires actual Releases.
+# Tag v* on Gitea, let the mirror push it, and this turns it into a Release.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

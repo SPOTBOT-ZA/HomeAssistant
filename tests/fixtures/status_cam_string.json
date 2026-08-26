@@ -1,0 +1,9 @@
+{
+  "serial": "S011224_8980947",
+  "data": {
+    "Mute_status": "true",
+    "snooze": "true",
+    "sw_version": "375",
+    "cam_status": "[{\"camnr\": \"1\", \"camname\": \"Gate\", \"onoff\": 0, \"ar_onoff\": \"1\", \"conn_status\": 0, \"snooze\": \"true\"}]"
+  }
+}

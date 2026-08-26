@@ -1,0 +1,8 @@
+{
+  "sb_id": "42",
+  "name": "Test",
+  "surname": "User",
+  "cellnumber": "+27821234567",
+  "email": "test@example.com",
+  "permissions": {}
+}
