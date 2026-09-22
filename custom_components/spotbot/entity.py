@@ -5,9 +5,9 @@ from __future__ import annotations
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .api import SpotBotCamera, SpotBotDeviceData
+from .api import SpotBotCamera
 from .const import DOMAIN, MANUFACTURER, MODEL
-from .coordinator import SpotBotCoordinator
+from .coordinator import SpotBotCoordinator, SpotBotDeviceData
 
 
 class SpotBotEntity(CoordinatorEntity[SpotBotCoordinator]):
