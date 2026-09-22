@@ -1,8 +1,8 @@
 # Installation (end users)
 
 Requirements: Home Assistant **2026.3.0 or newer**, a SpotBot account (phone
-number), and the SpotBot application credentials (client ID + secret — see
-below).
+number), and the SpotBot application credentials (client ID + secret —
+published in step 2 below).
 
 ## 1. Install the integration
 
@@ -23,13 +23,22 @@ Assistant `config/custom_components/` directory and restart.
 
 ## 2. Add application credentials
 
-The SpotBot OAuth client is confidential, so you enter its credentials once:
+Home Assistant integrations cannot ship built-in OAuth credentials, so you
+enter them once by hand. They are the same for every SpotBot user:
 
-1. Request the Home Assistant **client ID** and **client secret** from SpotBot
-   support (`support@spotbot.co.za`).
-2. In HA: **Settings → Devices & Services → ⋮ → Application Credentials →
+| Field | Value |
+|---|---|
+| Client ID | `sb_client_home_assistant` |
+| Client secret | `c23a75477684575eb38c943b5cfbc3d849a68a0fcfe1c4d176076c37abcf09f2` |
+
+1. In HA: **Settings → Devices & Services → ⋮ → Application Credentials →
    Add Application Credential**
-3. Integration: *SpotBot*; paste the client ID and secret.
+2. Integration: *SpotBot*; paste the client ID and secret above.
+
+The secret is deliberately low-value: it identifies the Home Assistant
+integration, not you. Issuing a token still requires *your* phone number and
+one-time PIN, and the client is limited to the status, control and account
+endpoints.
 
 ## 3. Add the integration
 
@@ -57,6 +66,8 @@ State refreshes every 2 minutes. Commands apply immediately and re-sync.
 
 - **"Missing configuration" when adding the integration** — Application
   Credentials (step 2) haven't been added yet.
+- **"Invalid client_id" on the SpotBot login page** — the client ID was
+  mistyped; it is `sb_client_home_assistant` exactly.
 - **Login page never redirects back** — the flow relies on
   [my.home-assistant.io](https://my.home-assistant.io). If you disabled the
   `my` integration, re-enable it (`default_config` includes it); a

@@ -49,15 +49,24 @@ The secret is deliberately low-value: possessing it grants nothing by itself —
 every token issuance still requires the *user's* phone + OTP, and the client
 is capped at epm `0x0803`. Still, the distribution options differ:
 
-1. **On request via support** (recommended for v1) — keeps the secret out of
-   the public GitHub mirror and search indexes; minor friction for users.
-2. Publish in the README — zero friction; effectively makes it a public
-   client without PKCE. Precedent exists among HA integrations, but weakest.
+1. On request via support — keeps the secret out of the public GitHub mirror
+   and search indexes; minor friction for users.
+2. **Publish in the docs — chosen for v1.** Zero friction; the credentials
+   live in [installation.md](installation.md) and therefore on the public
+   mirror. This effectively makes the client public without PKCE. Precedent
+   exists among HA integrations; it is the weakest option on paper, and is
+   acceptable here only because of the epm cap and the phone+OTP requirement
+   above.
 3. Per-customer clients — not supported by the current one-secret-per-client
    schema.
 4. **Long-term fix:** implement PKCE server-side, flip the client to
    `is_public = 1`, and drop the secret entirely (tracked in
    [roadmap](roadmap.md)).
+
+Because the secret is public, rotating it is a breaking change for every
+installed user — they must re-enter the new credentials by hand before the
+integration works again. Treat a rotation as a release with release notes,
+not a hotfix.
 
 ## 3. Later server work (not required for v1)
 
