@@ -142,7 +142,8 @@ class SpotBotStatus:
             cam_status = []
         return cls(
             sw_version=str(data.get("sw_version") or ""),
-            # TODO(live-verify): confirm the Mute_status value vocabulary.
+            # Verified live: Mute_status is the string "true"/"false", not a
+            # number — _as_bool already reads both.
             speaker_muted=_as_bool(data.get("Mute_status")),
             snoozed=_as_bool(data.get("snooze")),
             cameras=[SpotBotCamera.from_json(c) for c in cam_status if isinstance(c, dict)],
@@ -322,10 +323,20 @@ class SpotBotApiClient:
         await self._request("POST", f"/devices/{serial}/unsnooze/{cam}")
 
     async def async_set_speaker_mute(self, serial: str, muted: bool) -> None:
-        # TODO(live-verify): confirm the expected POST body/params for
-        # /speaker_mute (the swagger spec does not document them).
+        """Mute or unmute the device speaker.
+
+        The body key is "todo", "1" to mute and "0" to unmute. Anything else
+        is ignored by the device, which then falls through to unmuting — so
+        the old {"mute": "on"|"off"} body silently unmuted in both
+        directions and mute could never be engaged.
+
+        Only swagger-internal.php documents this route; the public spec
+        omits it entirely.
+        """
         await self._request(
-            "POST", f"/devices/{serial}/speaker_mute", json={"mute": "on" if muted else "off"}
+            "POST",
+            f"/devices/{serial}/speaker_mute",
+            json={"todo": "1" if muted else "0"},
         )
 
     async def async_panic(self, serial: str) -> None:
