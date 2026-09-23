@@ -61,8 +61,8 @@ async def test_setup_and_unload(
     # 1 device with 1 camera: speaker mute + detection + armed response.
     # Snooze is a button, not a switch — the device expires it by itself.
     assert len(hass.states.async_entity_ids("switch")) == 3
-    # device online + camera connectivity
-    assert len(hass.states.async_entity_ids("binary_sensor")) == 2
+    # device online + camera connectivity + camera snoozed
+    assert len(hass.states.async_entity_ids("binary_sensor")) == 3
     # snooze + unsnooze; panic is disabled by default, so it has no state
     assert len(hass.states.async_entity_ids("button")) == 2
 
@@ -174,6 +174,52 @@ async def test_sign_in_syncs_the_device_id_to_the_spotbots(
 
     syncs = [c for c in aioclient_mock.mock_calls if c[1].path.endswith("/users/sync")]
     assert len(syncs) == 1
+
+
+async def test_per_camera_snooze_state_is_surfaced(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    setup_credentials: None,
+    config_entry,
+) -> None:
+    """Snooze state is per camera, and this is the only place it shows.
+
+    The device-level status.snooze field is "false" even while cameras are
+    snoozed, so a device-wide entity reading it could never tell the truth.
+    """
+    status = json.loads(load_fixture("status.json"))
+    status["data"]["snooze"] = "false"  # device-level: always false in the wild
+    status["data"]["cam_status"][0]["snooze"] = "true"
+    status["data"]["cam_status"][0]["snoozed_until"] = "16:18"
+    _mock_api(aioclient_mock, status_payload=status)
+
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    snoozed = [
+        e for e in hass.states.async_entity_ids("binary_sensor") if e.endswith("_snoozed")
+    ]
+    assert len(snoozed) == 1
+    state = hass.states.get(snoozed[0])
+    assert state.state == "on"
+    assert state.attributes["snoozed_until"] == "16:18"
+
+
+def test_camera_snooze_parsing() -> None:
+    """snooze is a "true"/"false" string; snoozed_until is empty when not set."""
+    payload = json.loads(load_fixture("status.json"))["data"]
+
+    payload["cam_status"][0]["snooze"] = "true"
+    payload["cam_status"][0]["snoozed_until"] = "16:18"
+    cam = SpotBotStatus.from_json(payload).cameras[0]
+    assert cam.snoozed is True
+    assert cam.snoozed_until == "16:18"
+
+    payload["cam_status"][0]["snooze"] = "false"
+    payload["cam_status"][0]["snoozed_until"] = ""
+    cam = SpotBotStatus.from_json(payload).cameras[0]
+    assert cam.snoozed is False
+    assert cam.snoozed_until == ""
 
 
 def test_conn_status_is_a_fault_code_not_a_flag() -> None:

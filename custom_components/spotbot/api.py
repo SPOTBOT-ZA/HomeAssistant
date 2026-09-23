@@ -149,6 +149,11 @@ class SpotBotCamera:
     # told apart from an error later without re-reading the payload.
     conn_status: int | None
     snoozed: bool
+    # Wall-clock "HH:MM" the snooze runs until, empty when not snoozed. A
+    # time of day with no date, so it is surfaced as text rather than guessed
+    # into a timestamp — a snooze started before midnight would otherwise be
+    # dated a day early.
+    snoozed_until: str
     raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -170,6 +175,7 @@ class SpotBotCamera:
             connected=conn == CONN_STATUS_OK,
             conn_status=conn,
             snoozed=_as_bool(data.get("snooze")),
+            snoozed_until=str(data.get("snoozed_until") or ""),
             raw=data,
         )
 

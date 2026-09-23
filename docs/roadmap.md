@@ -49,16 +49,17 @@ No REST endpoint exists today. Server work: expose the legacy
 messaging-group route (bit 7). Then: "last detection" sensor with image +
 class attributes without webhooks.
 
-## 5. Per-camera snooze state + auto-snooze controls
+## 5. Per-camera snooze control + auto-snooze
 
-Two halves, and the first is the one that is actually missing something today.
+**State: done.** `cam_status[].snooze` and `snoozed_until` are surfaced as a
+per-camera `binary_sensor` "{camera} snoozed" (diagnostic), with
+`snoozed_until` as an attribute. That fills the gap the device-wide Snooze
+switch only pretended to fill, since `status.snooze` is `"false"` on every
+device observed even while cameras are snoozed.
 
-**State.** `cam_status[].snooze` and `snoozed_until` carry the real
-per-camera snooze state — and nothing in the integration surfaces it, now
-that the device-wide Snooze switch is gone (it read `status.snooze`, which is
-`"false"` on every device observed even while cameras are snoozed). A
-per-camera `binary_sensor`, or a timestamp sensor off `snoozed_until`, would
-fill the gap that switch only pretended to fill.
+A timestamp sensor is still possible but needs care: `snoozed_until` is a
+wall-clock `"HH:MM"` with no date, so a snooze started before midnight would
+be dated a day early unless the rollover is handled.
 
 **Control.** Routes exist (`snooze|unsnooze/{cam_nr}`, `POST /auto_snooze`).
 Per-camera snooze should follow the device-wide one and be a **button pair**

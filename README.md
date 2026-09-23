@@ -23,6 +23,7 @@ Home Assistant.
 | Snooze / Unsnooze | button | device |
 | Online | binary_sensor (diagnostic) | device |
 | Camera connectivity | binary_sensor (diagnostic) | camera |
+| Snoozed | binary_sensor (diagnostic), with `snoozed_until` | camera |
 | Panic | button (**disabled by default** — triggers a real armed response) | device |
 
 Two of those need a word of explanation:

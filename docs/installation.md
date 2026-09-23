@@ -51,6 +51,7 @@ Per SpotBot device:
   press pauses detection on every camera for an hour (the server's default),
   and Unsnooze resumes them early.
 - **Binary sensors** (diagnostic) — device *online*, per-camera *connectivity*
+  and *snoozed* (carrying the time the snooze runs until)
 - **Button** — *Panic* (**disabled by default**; enable it consciously in the
   entity settings — it triggers a real armed-response chain)
 

@@ -1,4 +1,4 @@
-"""Binary sensor platform: device online + per-camera connectivity."""
+"""Binary sensor platform: device online, per-camera connectivity and snooze."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ from .const import (
     CONN_STATUS_OK,
     CONN_STATUS_WARNING,
     KEY_CAMERA_CONNECTIVITY,
+    KEY_CAMERA_SNOOZED,
     KEY_ONLINE,
 )
 from .coordinator import SpotBotConfigEntry, SpotBotCoordinator
@@ -52,6 +53,7 @@ async def async_setup_entry(
                 new.append(
                     SpotBotCameraConnectivitySensor(coordinator, serial, cam.cam_nr)
                 )
+                new.append(SpotBotCameraSnoozedSensor(coordinator, serial, cam.cam_nr))
         if new:
             async_add_entities(new)
 
@@ -120,3 +122,39 @@ class SpotBotCameraConnectivitySensor(SpotBotEntity, BinarySensorEntity):
             "conn_status": cam.conn_status,
             "conn_status_text": CONN_STATUS_TEXT.get(cam.conn_status, "unknown"),
         }
+
+
+class SpotBotCameraSnoozedSensor(SpotBotEntity, BinarySensorEntity):
+    """Whether detection on a camera is currently snoozed.
+
+    Snooze state is per camera: the device-level status.snooze field is
+    "false" on every device seen, even while cameras are snoozed, so this is
+    the only place the real state shows. It is read-only on purpose — the
+    Snooze and Unsnooze buttons do the acting, because the device expires a
+    snooze by itself and there is nothing for a switch to turn back off.
+
+    snoozed_until is a wall-clock "HH:MM" with no date, so it rides along as
+    an attribute rather than being guessed into a timestamp.
+    """
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_translation_key = KEY_CAMERA_SNOOZED
+
+    def __init__(self, coordinator: SpotBotCoordinator, serial: str, cam_nr: str) -> None:
+        super().__init__(coordinator, serial, KEY_CAMERA_SNOOZED, cam_nr)
+        cam = self.camera
+        self._attr_translation_placeholders = {
+            "camera": cam.name if cam and cam.name else f"Camera {cam_nr}"
+        }
+
+    @property
+    def is_on(self) -> bool | None:
+        cam = self.camera
+        return cam.snoozed if cam else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        cam = self.camera
+        if cam is None:
+            return None
+        return {"snoozed_until": cam.snoozed_until or None}

@@ -64,6 +64,7 @@ KEY_SPEAKER_MUTE = "speaker_mute"
 KEY_PANIC = "panic"
 KEY_ONLINE = "online"
 KEY_CAMERA_CONNECTIVITY = "camera_connectivity"
+KEY_CAMERA_SNOOZED = "camera_snoozed"
 
 # --- cam_status.conn_status ------------------------------------------------
 # A fault code, not a flag. 0 is the healthy value — the apps hide the

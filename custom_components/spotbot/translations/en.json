@@ -47,6 +47,9 @@
     "binary_sensor": {
       "camera_connectivity": {
         "name": "{camera} connectivity"
+      },
+      "camera_snoozed": {
+        "name": "{camera} snoozed"
       }
     },
     "button": {
