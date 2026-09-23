@@ -26,6 +26,12 @@ OAUTH2_AUTHORIZE = f"{DEFAULT_BASE_URL}/oauth/authorize"
 OAUTH2_TOKEN = f"{DEFAULT_BASE_URL}/oauth/token"
 
 CONF_BASE_URL = "base_url"
+# Which oauth device id the SpotBots were last told to sync for, and which of
+# them accepted it. Signing in mints a new device id that the firmware does
+# not know until it syncs, so the sync is redone whenever this no longer
+# matches the entry's token, and retried for any serial that was offline.
+CONF_SYNCED_DEVICE_ID = "synced_device_id"
+CONF_SYNCED_SERIALS = "synced_serials"
 
 # --- Built-in OAuth client -------------------------------------------------
 # One client serves every installation, so the integration registers it

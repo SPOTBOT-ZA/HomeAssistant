@@ -435,3 +435,24 @@ class SpotBotApiClient:
 
     async def async_panic(self, serial: str) -> None:
         await self._request("POST", f"/devices/{serial}/panic")
+
+    async def async_sync_users(self, serial: str, device_id: str, sb_id: str) -> None:
+        """Tell the device to refresh its user database from the server.
+
+        Signing in mints a new oauth device id and records it server-side, but
+        the SpotBot's own firmware does not know it until it syncs. Until then
+        the device refuses commands from this session with an RPC-level
+        "Authentication failed", which the gateway reports as HTTP 403 — the
+        entities all read fine and every control silently fails.
+
+        The PWA does the same thing once per session per serial
+        (SpotBotClass.syncUsersToDb, RPC sync_users_to_DB), and like every
+        non-public route this one passes the body through verbatim, so the
+        caller supplies device_id and sbid_p rather than the server injecting
+        them.
+        """
+        await self._request(
+            "POST",
+            f"/devices/{serial}/users/sync",
+            json={"device_id": device_id, "sbid_p": sb_id},
+        )

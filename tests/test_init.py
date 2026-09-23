@@ -11,7 +11,11 @@ from pytest_homeassistant_custom_component.common import load_fixture
 from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClientMocker
 
 from custom_components.spotbot.api import SpotBotStatus
-from custom_components.spotbot.const import DEFAULT_BASE_URL
+from custom_components.spotbot.const import (
+    CONF_SYNCED_DEVICE_ID,
+    CONF_SYNCED_SERIALS,
+    DEFAULT_BASE_URL,
+)
 
 SERIAL = "S011224_8980947"
 
@@ -122,6 +126,54 @@ def test_na_armed_response_is_not_applicable() -> None:
     cam = SpotBotStatus.from_json(payload).cameras[0]
     assert cam.armed_response_supported is True
     assert cam.armed_response_on is True
+
+
+async def test_sign_in_syncs_the_device_id_to_the_spotbots(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    setup_credentials: None,
+    config_entry,
+) -> None:
+    """Each SpotBot is told to pick up this session's oauth device id.
+
+    Signing in mints a device id the firmware does not know until it syncs,
+    and until then the device refuses every command with an RPC-level
+    "Authentication failed" while the entities all look healthy — so the
+    absence of this call is invisible until someone flips a switch.
+
+    It is recorded against the device id rather than run on every setup: a
+    restart reuses the same id, and each sync is an MQTT round trip.
+    """
+    hass.config_entries.async_update_entry(
+        config_entry,
+        data={
+            **config_entry.data,
+            "token": {**config_entry.data["token"], "oauth_device_id": "hass-test"},
+        },
+    )
+    _mock_api(aioclient_mock)
+    aioclient_mock.post(
+        f"{DEFAULT_BASE_URL}/api/v2/devices/{SERIAL}/users/sync",
+        json={"serial": SERIAL, "data": {"success": True}},
+    )
+
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    syncs = [c for c in aioclient_mock.mock_calls if c[1].path.endswith("/users/sync")]
+    assert len(syncs) == 1
+    assert syncs[0][2] == {"device_id": "hass-test", "sbid_p": "42"}
+    assert config_entry.data[CONF_SYNCED_DEVICE_ID] == "hass-test"
+    assert config_entry.data[CONF_SYNCED_SERIALS] == [SERIAL]
+
+    # Same device id on the next setup: nothing to re-sync.
+    assert await hass.config_entries.async_unload(config_entry.entry_id)
+    await hass.async_block_till_done()
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    syncs = [c for c in aioclient_mock.mock_calls if c[1].path.endswith("/users/sync")]
+    assert len(syncs) == 1
 
 
 def test_conn_status_is_a_fault_code_not_a_flag() -> None:
