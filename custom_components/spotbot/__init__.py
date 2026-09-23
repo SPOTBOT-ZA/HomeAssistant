@@ -7,18 +7,34 @@ import aiohttp
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
-from homeassistant.helpers import config_entry_oauth2_flow
+from homeassistant.helpers import config_entry_oauth2_flow, config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
 
 from .api import AsyncConfigEntryAuth, SpotBotApiClient
-from .const import CONF_BASE_URL, DEFAULT_BASE_URL
+from .application_credentials import async_ensure_client_credential
+from .const import CONF_BASE_URL, DEFAULT_BASE_URL, DOMAIN
 from .coordinator import SpotBotConfigEntry, SpotBotCoordinator
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
     Platform.SWITCH,
 ]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Restore the built-in SpotBot OAuth client on startup.
+
+    The config flow registers it too (and is what covers a fresh install,
+    where this never runs). This call is what puts it back for an existing
+    installation whose credential was deleted by hand, so a reauth still has
+    an implementation to use.
+    """
+    await async_ensure_client_credential(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: SpotBotConfigEntry) -> bool:

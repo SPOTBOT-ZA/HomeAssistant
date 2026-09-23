@@ -41,9 +41,18 @@ are shown exactly once.
 
 ## 2. Distribute the credentials
 
-Each Home Assistant user must enter `client_id` + `client_secret` under
-**Settings → Devices & Services → Application Credentials** (HA integrations
-cannot ship built-in credentials).
+The registered client for `SPOTBOT_APP_NEO` is:
+
+| Field | Value |
+|---|---|
+| Client ID | `sb_client_home_assistant` |
+| Client secret | `c23a75477684575eb38c943b5cfbc3d849a68a0fcfe1c4d176076c37abcf09f2` |
+
+These ship in the integration (`const.OAUTH_CLIENT_ID` /
+`const.OAUTH_CLIENT_SECRET`) and are registered automatically through
+`application_credentials.async_ensure_client_credential`, so users never see
+the Application Credentials dialog. Changing the client here means changing
+those constants and cutting a release.
 
 The secret is deliberately low-value: possessing it grants nothing by itself —
 every token issuance still requires the *user's* phone + OTP, and the client

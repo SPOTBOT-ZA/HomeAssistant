@@ -1,8 +1,8 @@
 # Installation (end users)
 
-Requirements: Home Assistant **2026.3.0 or newer**, a SpotBot account (phone
-number), and the SpotBot application credentials (client ID + secret —
-published in step 2 below).
+Requirements: Home Assistant **2026.3.0 or newer** and a SpotBot account
+(phone number). There is nothing to request from support — the integration
+brings its own OAuth credentials.
 
 ## 1. Install the integration
 
@@ -21,26 +21,7 @@ custom repository:
 Copy `custom_components/spotbot/` from this repository into your Home
 Assistant `config/custom_components/` directory and restart.
 
-## 2. Add application credentials
-
-Home Assistant integrations cannot ship built-in OAuth credentials, so you
-enter them once by hand. They are the same for every SpotBot user:
-
-| Field | Value |
-|---|---|
-| Client ID | `sb_client_home_assistant` |
-| Client secret | `c23a75477684575eb38c943b5cfbc3d849a68a0fcfe1c4d176076c37abcf09f2` |
-
-1. In HA: **Settings → Devices & Services → ⋮ → Application Credentials →
-   Add Application Credential**
-2. Integration: *SpotBot*; paste the client ID and secret above.
-
-The secret is deliberately low-value: it identifies the Home Assistant
-integration, not you. Issuing a token still requires *your* phone number and
-one-time PIN, and the client is limited to the status, control and account
-endpoints.
-
-## 3. Add the integration
+## 2. Add the integration
 
 1. **Settings → Devices & Services → Add Integration → SpotBot**
 2. Your browser opens the SpotBot login page: enter your **phone number**,
@@ -49,6 +30,15 @@ endpoints.
 3. You are redirected back via `my.home-assistant.io` and the account is
    linked. One config entry represents one SpotBot account; every SpotBot on
    the account appears as a device.
+
+There is no client ID or secret to enter: the integration registers its own
+OAuth client the moment you click **Add Integration**. The credentials are
+the same for every installation and are published in
+[server-setup.md](server-setup.md) — the secret identifies the integration,
+not you, and issuing a token still requires *your* phone number and one-time
+PIN. To use your own SpotBot OAuth client instead, add it under **Settings →
+Devices & Services → ⋮ → Application Credentials** before adding the
+integration, and pick it when the flow asks which to use.
 
 ## What you get (v1)
 
@@ -64,14 +54,20 @@ State refreshes every 2 minutes. Commands apply immediately and re-sync.
 
 ## Troubleshooting
 
-- **"Missing configuration" when adding the integration** — Application
-  Credentials (step 2) haven't been added yet.
-- **"Invalid client_id" on the SpotBot login page** — the client ID was
-  mistyped; it is `sb_client_home_assistant` exactly.
+- **"Missing configuration" / "Missing credentials" when adding the
+  integration** — the built-in client failed to register, which means a
+  broken install rather than a missing step. Check the log, then reinstall.
+- **"Invalid client_id" on the SpotBot login page** — the deployment this
+  build points at has no `sb_client_home_assistant` client registered (see
+  [server-setup.md](server-setup.md)), or you substituted your own client
+  and mistyped its ID.
 - **Login page never redirects back** — the flow relies on
-  [my.home-assistant.io](https://my.home-assistant.io). If you disabled the
-  `my` integration, re-enable it (`default_config` includes it); a
-  local-callback alternative is not supported in v1.
+  [my.home-assistant.io](https://my.home-assistant.io), which sends the
+  browser to the instance URL *it* has stored for you. If that URL is not
+  the one you actually reach Home Assistant on, the final hop lands nowhere
+  and the flow appears to hang: open my.home-assistant.io and correct it.
+  If you disabled the `my` integration, re-enable it (`default_config`
+  includes it); a local-callback alternative is not supported in v1.
 - **Re-authentication prompt** — your refresh token expired (30 days unused)
   or the `ha-…` device was removed from your SpotBot account (SpotBot app →
   signed-in devices). Sign in again; entities and history are preserved.

@@ -16,8 +16,8 @@
       "oauth_failed": "Error while obtaining an access token from SpotBot.",
       "oauth_timeout": "Timeout while authenticating with SpotBot.",
       "oauth_unauthorized": "SpotBot rejected the authorization request. Check the client credentials.",
-      "missing_configuration": "SpotBot application credentials are not configured. Add them under Settings > Devices & Services > Application Credentials first.",
-      "missing_credentials": "SpotBot application credentials are not configured. Add them under Settings > Devices & Services > Application Credentials first.",
+      "missing_configuration": "SpotBot's built-in application credentials failed to register. This points at a broken installation — check the Home Assistant log, then reinstall the integration or add the credentials by hand under Settings > Devices & Services > Application Credentials.",
+      "missing_credentials": "SpotBot's built-in application credentials failed to register. This points at a broken installation — check the Home Assistant log, then reinstall the integration or add the credentials by hand under Settings > Devices & Services > Application Credentials.",
       "authorize_url_timeout": "Timeout generating the SpotBot authorize URL.",
       "no_url_available": "No URL available. Check your Home Assistant external URL configuration.",
       "user_rejected_authorize": "The authorization request was rejected.",
@@ -30,7 +30,7 @@
     }
   },
   "application_credentials": {
-    "description": "SpotBot uses OAuth2 with a confidential client. Request the Home Assistant client ID and client secret from SpotBot support (support@spotbot.co.za), then enter them here. Signing in happens on the SpotBot login page with your phone number and a one-time PIN — no password or extra account is needed. See {docs_url} for a walkthrough. The OAuth server is {oauth_url}."
+    "description": "You do not normally need this dialog: SpotBot ships its client ID and secret, and the integration registers them for you. Use it only to substitute your own SpotBot OAuth client. Signing in happens on the SpotBot login page with your phone number and a one-time PIN — no password or extra account is needed. See {docs_url} for a walkthrough. The OAuth server is {oauth_url}."
   },
   "entity": {
     "switch": {

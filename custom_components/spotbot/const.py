@@ -27,6 +27,19 @@ OAUTH2_TOKEN = f"{DEFAULT_BASE_URL}/oauth/token"
 
 CONF_BASE_URL = "base_url"
 
+# --- Built-in OAuth client -------------------------------------------------
+# One client serves every installation, so the integration registers it
+# itself (see async_setup) and the Application Credentials dialog never
+# appears. Shipping the secret is the deliberate choice recorded in
+# docs/server-setup.md §2: it identifies the integration, not the user.
+# Issuing a token still requires the user's own phone number and one-time
+# PIN, and the client is capped to the status, control and account endpoints
+# (epm 0x0803). Rotating it is therefore a breaking change for every
+# installation — see the note in that doc before changing these.
+OAUTH_CLIENT_ID = "sb_client_home_assistant"
+OAUTH_CLIENT_SECRET = "c23a75477684575eb38c943b5cfbc3d849a68a0fcfe1c4d176076c37abcf09f2"
+OAUTH_CLIENT_NAME = "SpotBot"
+
 # --- Polling ---------------------------------------------------------------
 # Every REST call is a synchronous MQTT round-trip on the server that parks a
 # PHP worker for up to ~8 s, so poll gently and never stampede.

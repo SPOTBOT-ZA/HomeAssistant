@@ -17,6 +17,7 @@ import voluptuous as vol
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlowResult
 from homeassistant.helpers import aiohttp_client, config_entry_oauth2_flow
 
+from .application_credentials import async_ensure_client_credential
 from .const import API_TIMEOUT, CONF_BASE_URL, DEFAULT_BASE_URL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,6 +35,21 @@ class SpotBotOAuth2FlowHandler(
     def logger(self) -> logging.Logger:
         """Return the logger."""
         return _LOGGER
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Register the built-in client, then run the normal OAuth step.
+
+        This is the first of our code that runs when the user clicks Add
+        Integration, and on a fresh install nothing has registered the
+        credential yet — async_setup only runs once a config entry exists.
+        Without this the flow would abort with missing_credentials and send
+        the user to the Application Credentials dialog for a client ID and
+        secret that ship with the integration.
+        """
+        await async_ensure_client_credential(self.hass)
+        return await super().async_step_user(user_input)
 
     @property
     def extra_authorize_data(self) -> dict[str, Any]:
