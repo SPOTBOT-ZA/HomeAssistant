@@ -63,9 +63,10 @@ then request a coordinator refresh so state converges.
 | `GET /account/devices` | one HA *device* per `Serial` | name = `Bot_title` or `Name` |
 | `GET /devices/{s}/presence` → `online` | `binary_sensor` (connectivity, diagnostic) | reports **off** rather than unavailable when down |
 | `GET /devices/{s}/status` → `cam_status[].onoff` | `switch` "{camera} detection" per camera | `POST /on|off/{cam_nr}` |
-| `status` → `cam_status[].ar_onoff` | `switch` "{camera} armed response" per camera | `POST /ar_on|ar_off/{cam_nr}` |
-| `status` → `cam_status[].conn_status` | `binary_sensor` "{camera} connectivity" (diagnostic) | |
-| `status` → `snooze` | `switch` "Snooze" per device | `POST /snooze|unsnooze/all` |
+| `status` → `cam_status[].ar_onoff` | `switch` "{camera} armed response" per camera | `POST /ar_on|ar_off/{cam_nr}`. **`"NA"` means the camera has no armed response — no entity is created.** The API still accepts arm/disarm for such a camera and returns success while the device ignores it, so the value is the only way to know |
+| `status` → `cam_status[].conn_status` | `binary_sensor` "{camera} connectivity" (diagnostic) | **Reads `0` on every camera observed so far**, while `onoff` on the same payload varies — so the field appears not to be populated server-side and these sensors all sit at *off*. Client-side it is read correctly; the gap is in the gateway |
+| — | `button` "Snooze" / "Unsnooze" per device | `POST /snooze|unsnooze/all`. Buttons, not a switch: snooze is timed and the device expires it by itself. A press uses the server's default hour — the route's `time` field has no equivalent on a button |
+| `status` → `cam_status[].snooze`, `snoozed_until` | *(not surfaced yet)* | The **per-camera** snooze state, and the only one that is real. The device-level `status.snooze` is `"false"` on every device observed, even with cameras snoozed — an earlier device-wide Snooze switch read it and could never report the truth |
 | `status` → `Mute_status` | `switch` "Speaker mute" per device | `POST /speaker_mute` |
 | — | `button` "Panic" per device | `POST /panic`; **disabled by default** (it triggers a real armed-response chain) |
 

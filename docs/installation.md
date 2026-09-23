@@ -45,10 +45,19 @@ integration, and pick it when the flow asks which to use.
 Per SpotBot device:
 
 - **Switches** — per-camera *detection* and *armed response*, device-wide
-  *snooze*, *speaker mute*
+  *speaker mute*
+- **Buttons** — *Snooze* and *Unsnooze*, device-wide. Snooze is a timed action
+  the SpotBot expires by itself, so it is a button rather than a switch: a
+  press pauses detection on every camera for an hour (the server's default),
+  and Unsnooze resumes them early.
 - **Binary sensors** (diagnostic) — device *online*, per-camera *connectivity*
 - **Button** — *Panic* (**disabled by default**; enable it consciously in the
   entity settings — it triggers a real armed-response chain)
+
+Cameras without armed response get no armed-response switch. The SpotBot
+reports those as `"NA"`, and the API accepts an arm/disarm command for them
+and reports success while the device ignores it — so a switch there would
+read *off* and do nothing.
 
 State refreshes every 2 minutes. Commands apply immediately and re-sync.
 

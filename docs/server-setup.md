@@ -5,9 +5,15 @@ at — **SPOTBOT_APP_NEO** (see `const.DEFAULT_APP_FOLDER`). JWTs are signed
 with a per-client key held in that deployment's database, so the client must
 exist in the *same* deployment the authorize/token URLs belong to.
 
-> Status: the API is **not yet live on the NEO deployment** — this recipe can
-> only be executed (and the integration end-to-end tested) once NEO serves
-> `/SPOTBOT_APP_NEO/API`.
+> Status: done. `sb_client_home_assistant` is registered on NEO and the
+> integration has been driven end to end against it. The recipe below is what
+> that client was built from, and what to repeat for another deployment.
+>
+> The live client differs from this recipe in two cosmetic ways —
+> `client_name` is `HOME ASSISTANT` and `device_id_prefix` is `hass` (so
+> sessions appear as `hass-…`, not `ha-…`). Neither affects behaviour; the
+> fields that do are `is_public`, `endpoint_mask` and
+> `token_expiry_seconds`.
 
 ## 1. Register the client
 

@@ -20,8 +20,11 @@ All OAuth/API URLs derive from one constant:
    (per-deployment databases → per-deployment clients/keys), per
    [server-setup.md](server-setup.md).
 
-> The API is not yet live on the NEO deployment, so end-to-end testing is
-> currently blocked; offline checks below all work.
+> NEO is live and the integration has been tested end to end against it.
+> Note the OAuth client is per deployment: `sb_client_home_assistant` exists
+> on NEO, so pointing `DEFAULT_APP_FOLDER` elsewhere means registering it
+> there too, and updating `OAUTH_CLIENT_ID`/`OAUTH_CLIENT_SECRET` in
+> `const.py` to match that deployment's client.
 
 ## Offline checks
 
@@ -50,13 +53,33 @@ mirror (`.github/workflows/validate.yml`).
 
 ## Running in a dev Home Assistant
 
-Quickest loop: a HA core dev container or a plain venv install
-(`pip install homeassistant`), then symlink or copy
-`custom_components/spotbot` into its config dir, add Application Credentials
-for your dev client, and add the integration. Watch the log for the
-`TODO(live-verify)` items in `api.py` — the exact value vocabulary of
-`Mute_status`, `onoff`/`ar_onoff` and the `/speaker_mute` POST body must be
-confirmed against a live device before release.
+Quickest loop: the official container with the component bind-mounted
+straight out of this repo, so an edit is one restart away —
+
+```bash
+docker run -d --name homeassistant --restart unless-stopped \
+  -p 8123:8123 -e TZ=Africa/Johannesburg \
+  -v <config-dir>:/config \
+  -v "$PWD/custom_components/spotbot:/config/custom_components/spotbot" \
+  ghcr.io/home-assistant/home-assistant:stable
+docker restart homeassistant     # after every edit
+```
+
+A HA core dev container or a venv install (`pip install homeassistant`) with
+the component symlinked in works the same way. Nothing to set up on the
+Application Credentials side — the integration registers its own client.
+
+Python caches bytecode into `custom_components/spotbot/__pycache__` as root
+from inside the container; clear it with
+`docker exec homeassistant rm -rf /config/custom_components/spotbot/__pycache__`
+rather than `sudo` on the host.
+
+The three `TODO(live-verify)` items that used to sit in `api.py` are all
+resolved against live devices — `Mute_status` and `snooze` are the strings
+`"true"`/`"false"`, `onoff` is a number, `ar_onoff` is a number or `"NA"`,
+and `/speaker_mute` takes `{"todo": "1"|"0"}`. See
+[oauth-and-api.md](oauth-and-api.md) for the full vocabulary; if a live
+payload ever disagrees, fix the fixture *and* the parser together.
 
 ## Release procedure
 

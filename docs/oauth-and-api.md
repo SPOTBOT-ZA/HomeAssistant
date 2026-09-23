@@ -66,17 +66,48 @@ the JWT's `epm` bitmask (below). Errors: RFC 7807 `application/problem+json`
 | Code | Meaning | Client behavior |
 |---|---|---|
 | 401 | Missing/malformed Authorization header | `SpotBotAuthError` → reauth |
-| **403** | *Both* expired/bad token **and** endpoint-mask denial | Disambiguated by probing `/oauth/userinfo`: probe OK → `SpotBotPermissionError` (never reauth-loops); probe fails → `SpotBotAuthError` |
+| **403** | **Three** different things (see below) | Told apart by reading the problem+json body; `/oauth/userinfo` is only the fallback when the body says nothing |
 | **504** | Device did not answer over MQTT — i.e. **device offline** | `SpotBotDeviceOfflineError`; treated as unavailability, never as a setup/update failure |
 | 404 `no_presence` | No retained presence message for the serial | Presence = unknown/offline |
 | 502 `mqtt_*` / `rpc_error` | Broker or device-side errors | `SpotBotApiError`, logged, retried next cycle |
+
+#### The three meanings of 403
+
+The gateway overloads 403, but its `problem+json` body distinguishes them, so
+`_classify_403` reads that first:
+
+| `type` | `title` | Means | Client |
+|---|---|---|---|
+| `…/rpc_error` | `Device returned an error` | The **device or gateway** refused the RPC (`index.php` maps an RPC-level 401/403 onto HTTP 403). Per-device, and seen to be transient | `SpotBotDeviceRefusedError`, carrying the device's own detail |
+| `…/forbidden` | `Endpoint not available` | The OAuth client's endpoint mask really does deny the route | `SpotBotPermissionError` |
+| `…/forbidden` | `Invalid or expired token` | Bad JWT | `SpotBotAuthError` → reauth |
+
+Only when the body carries none of these does the client fall back to probing
+`/oauth/userinfo`, which succeeds for any valid token and so separates a live
+token from a dead one without side effects.
+
+This matters more than it looks: treating every 403 as an endpoint-mask denial
+sends people to the management console to widen a mask that is already
+correct. That happened in testing, against a client whose `epm` was `0x0803`
+the whole time.
 
 ### Payload quirks
 
 - `status.cam_status` may arrive as a **JSON-encoded string** instead of a
   list — `SpotBotStatus.from_json` coerces it.
-- Field typing is loose: `onoff` is a number, `ar_onoff` number-or-string,
-  `snooze` a `"true"`/`"false"` string — everything goes through `_as_bool`.
+- Field typing is loose, and confirmed against live payloads: `onoff` is `0`/`1`
+  as a number; `ar_onoff` is `0`/`1` as a number **or the string `"NA"`**;
+  `snooze` and `Mute_status` are the strings `"true"`/`"false"`. Booleans go
+  through `_as_bool`, which handles all of those — but `"NA"` is *not* a
+  boolean: it means armed response does not exist on that camera, so
+  `_is_applicable` separates it and no entity is created. Flattening it to
+  `False` produces a switch that reads *off* and silently no-ops.
+- `speaker_mute` takes `{"todo": "1"|"0"}` — `"1"` mutes. The device ignores
+  keys it does not know and falls through to **unmuting**, so a wrong key
+  fails silently in the "unmute" direction and mute can never engage. Only
+  `swagger-internal.php` documents this route; the public spec omits it.
+- `conn_status` reads `0` on every camera observed, while `onoff` varies in
+  the same payload — the field appears not to be populated server-side.
 - `/presence` returns a **flattened** object `{serial, online, ts, fw,
   presence}` (the Swagger spec wrongly documents a `data` envelope; the code
   wins).

@@ -49,10 +49,24 @@ No REST endpoint exists today. Server work: expose the legacy
 messaging-group route (bit 7). Then: "last detection" sensor with image +
 class attributes without webhooks.
 
-## 5. Per-camera snooze + auto-snooze controls
+## 5. Per-camera snooze state + auto-snooze controls
 
-Routes exist (`snooze|unsnooze/{cam_nr}`, `POST /auto_snooze`); model as
-per-camera `switch` + `number`/`select` for auto-snooze thresholds.
+Two halves, and the first is the one that is actually missing something today.
+
+**State.** `cam_status[].snooze` and `snoozed_until` carry the real
+per-camera snooze state — and nothing in the integration surfaces it, now
+that the device-wide Snooze switch is gone (it read `status.snooze`, which is
+`"false"` on every device observed even while cameras are snoozed). A
+per-camera `binary_sensor`, or a timestamp sensor off `snoozed_until`, would
+fill the gap that switch only pretended to fill.
+
+**Control.** Routes exist (`snooze|unsnooze/{cam_nr}`, `POST /auto_snooze`).
+Per-camera snooze should follow the device-wide one and be a **button pair**
+rather than a switch, for the same reason: the device expires it by itself.
+Auto-snooze thresholds are genuine settings, so `number`/`select` fits there.
+A `number` for snooze duration would also expose the route's `time` field,
+which a button cannot carry — presses currently use the server's default
+hour.
 
 ## 6. Deployment picker
 
