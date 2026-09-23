@@ -16,7 +16,11 @@ from custom_components.spotbot.const import DEFAULT_BASE_URL
 SERIAL = "S011224_8980947"
 
 
-def _mock_api(aioclient_mock: AiohttpClientMocker, presence_status: int = 200) -> None:
+def _mock_api(
+    aioclient_mock: AiohttpClientMocker,
+    presence_status: int = 200,
+    status_payload: dict | None = None,
+) -> None:
     aioclient_mock.get(
         f"{DEFAULT_BASE_URL}/api/v2/account/devices",
         json=json.loads(load_fixture("devices.json")),
@@ -33,7 +37,7 @@ def _mock_api(aioclient_mock: AiohttpClientMocker, presence_status: int = 200) -
         )
     aioclient_mock.get(
         f"{DEFAULT_BASE_URL}/api/v2/devices/{SERIAL}/status",
-        json=json.loads(load_fixture("status.json")),
+        json=status_payload or json.loads(load_fixture("status.json")),
     )
 
 
@@ -50,12 +54,13 @@ async def test_setup_and_unload(
     await hass.async_block_till_done()
     assert config_entry.state is ConfigEntryState.LOADED
 
-    # 1 device with 1 camera: snooze + speaker mute + detection + armed response
-    assert len(hass.states.async_entity_ids("switch")) == 4
+    # 1 device with 1 camera: speaker mute + detection + armed response.
+    # Snooze is a button, not a switch — the device expires it by itself.
+    assert len(hass.states.async_entity_ids("switch")) == 3
     # device online + camera connectivity
     assert len(hass.states.async_entity_ids("binary_sensor")) == 2
-    # panic button is disabled by default -> no state
-    assert len(hass.states.async_entity_ids("button")) == 0
+    # snooze + unsnooze; panic is disabled by default, so it has no state
+    assert len(hass.states.async_entity_ids("button")) == 2
 
     assert await hass.config_entries.async_unload(config_entry.entry_id)
     await hass.async_block_till_done()
@@ -77,6 +82,46 @@ async def test_device_offline_is_not_a_setup_failure(
 
     for entity_id in hass.states.async_entity_ids("switch"):
         assert hass.states.get(entity_id).state == "unavailable"
+
+
+async def test_na_camera_gets_no_armed_response_entity(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    setup_credentials: None,
+    config_entry,
+) -> None:
+    """A camera reporting ar_onoff "NA" has no armed response, so no entity.
+
+    The API accepts /ar_on and /ar_off for such a camera and answers 200
+    while the device ignores it, so a switch here would read off and
+    silently do nothing. Detection must still be there.
+    """
+    status = json.loads(load_fixture("status.json"))
+    status["data"]["cam_status"][0]["ar_onoff"] = "NA"
+    _mock_api(aioclient_mock, status_payload=status)
+
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    switches = hass.states.async_entity_ids("switch")
+    assert not [e for e in switches if e.endswith("_armed_response")]
+    assert [e for e in switches if e.endswith("_detection")]
+    # speaker mute + detection, with armed response gone
+    assert len(switches) == 2
+
+
+def test_na_armed_response_is_not_applicable() -> None:
+    """"NA" is not a boolean — it means the feature is absent."""
+    payload = json.loads(load_fixture("status.json"))["data"]
+    payload["cam_status"][0]["ar_onoff"] = "NA"
+    cam = SpotBotStatus.from_json(payload).cameras[0]
+    assert cam.armed_response_supported is False
+    assert cam.armed_response_on is False
+
+    payload["cam_status"][0]["ar_onoff"] = 1
+    cam = SpotBotStatus.from_json(payload).cameras[0]
+    assert cam.armed_response_supported is True
+    assert cam.armed_response_on is True
 
 
 def test_status_parses_cam_status_string() -> None:
