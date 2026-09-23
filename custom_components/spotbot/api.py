@@ -27,7 +27,7 @@ import aiohttp
 
 from homeassistant.helpers import config_entry_oauth2_flow
 
-from .const import API_TIMEOUT
+from .const import API_TIMEOUT, CONN_STATUS_OK
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,6 +72,22 @@ def _as_bool(value: Any) -> bool:
     if isinstance(value, str):
         return value.strip().lower() in ("1", "true", "on", "yes", "act", "active")
     return False
+
+
+def _as_int(value: Any) -> int | None:
+    """Coerce a loosely-typed numeric field to int, or None if it is not one."""
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(value.strip())
+        except ValueError:
+            return None
+    return None
 
 
 def _is_applicable(value: Any) -> bool:
@@ -129,12 +145,16 @@ class SpotBotCamera:
     # whether it took — only this field says so up front.
     armed_response_supported: bool
     connected: bool
+    # The raw conn_status code behind `connected`, kept so a warning can be
+    # told apart from an error later without re-reading the payload.
+    conn_status: int | None
     snoozed: bool
     raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_json(cls, data: dict[str, Any]) -> SpotBotCamera:
         ar = data.get("ar_onoff")
+        conn = _as_int(data.get("conn_status"))
         return cls(
             cam_nr=str(data.get("camnr", "")),
             name=str(data.get("camname") or ""),
@@ -143,7 +163,12 @@ class SpotBotCamera:
             detection_on=_as_bool(data.get("onoff")),
             armed_response_on=_as_bool(ar),
             armed_response_supported=_is_applicable(ar),
-            connected=_as_bool(data.get("conn_status")),
+            # conn_status is a fault code, not a flag: 0 "Fine", 1 warning,
+            # 2 error/video off, anything else unknown. Only 0 is connected.
+            # Reading it as a boolean inverts the sensor and reports every
+            # healthy camera as disconnected.
+            connected=conn == CONN_STATUS_OK,
+            conn_status=conn,
             snoozed=_as_bool(data.get("snooze")),
             raw=data,
         )

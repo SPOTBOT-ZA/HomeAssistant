@@ -106,8 +106,15 @@ the whole time.
   keys it does not know and falls through to **unmuting**, so a wrong key
   fails silently in the "unmute" direction and mute can never engage. Only
   `swagger-internal.php` documents this route; the public spec omits it.
-- `conn_status` reads `0` on every camera observed, while `onoff` varies in
-  the same payload — the field appears not to be populated server-side.
+- `conn_status` is a **fault code, not a boolean**: `0` "Fine", `1` warning,
+  `2` error/video off, anything else unknown. Only `0` means connected, and
+  it is the value a healthy camera reports — the apps hide the indicator for
+  `0` and draw something only for the rest (`getConnectionStatusIcon` in the
+  legacy JS, `CameraStatusGrid` in the PWA). Running it through `_as_bool`
+  inverts the sensor and reports every healthy camera as disconnected, which
+  is what this client did until it was caught: the field reading `0`
+  everywhere looked like a gateway that was not populating it, and was
+  actually every camera saying it was fine.
 - `/presence` returns a **flattened** object `{serial, online, ts, fw,
   presence}` (the Swagger spec wrongly documents a `data` envelope; the code
   wins).

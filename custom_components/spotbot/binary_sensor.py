@@ -12,9 +12,21 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import KEY_CAMERA_CONNECTIVITY, KEY_ONLINE
+from .const import (
+    CONN_STATUS_ERROR,
+    CONN_STATUS_OK,
+    CONN_STATUS_WARNING,
+    KEY_CAMERA_CONNECTIVITY,
+    KEY_ONLINE,
+)
 from .coordinator import SpotBotConfigEntry, SpotBotCoordinator
 from .entity import SpotBotEntity
+
+CONN_STATUS_TEXT = {
+    CONN_STATUS_OK: "fine",
+    CONN_STATUS_WARNING: "warning",
+    CONN_STATUS_ERROR: "error",
+}
 
 
 async def async_setup_entry(
@@ -75,7 +87,13 @@ class SpotBotOnlineSensor(SpotBotEntity, BinarySensorEntity):
 
 
 class SpotBotCameraConnectivitySensor(SpotBotEntity, BinarySensorEntity):
-    """Whether a camera is connected to its SpotBot (cam_status.conn_status)."""
+    """Whether a camera is connected to its SpotBot (cam_status.conn_status).
+
+    conn_status is a fault code — 0 "Fine", 1 warning, 2 error/video off,
+    anything else unknown — so only 0 counts as connected. The code itself
+    is exposed as an attribute, since "warning" and "error" are different
+    problems and the binary sensor flattens both to off.
+    """
 
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
@@ -92,3 +110,13 @@ class SpotBotCameraConnectivitySensor(SpotBotEntity, BinarySensorEntity):
     def is_on(self) -> bool | None:
         cam = self.camera
         return cam.connected if cam else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        cam = self.camera
+        if cam is None:
+            return None
+        return {
+            "conn_status": cam.conn_status,
+            "conn_status_text": CONN_STATUS_TEXT.get(cam.conn_status, "unknown"),
+        }

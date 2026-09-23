@@ -59,5 +59,12 @@ KEY_PANIC = "panic"
 KEY_ONLINE = "online"
 KEY_CAMERA_CONNECTIVITY = "camera_connectivity"
 
+# --- cam_status.conn_status ------------------------------------------------
+# A fault code, not a flag. 0 is the healthy value — the apps hide the
+# indicator entirely for it and only draw something for the rest.
+CONN_STATUS_OK = 0
+CONN_STATUS_WARNING = 1
+CONN_STATUS_ERROR = 2
+
 MANUFACTURER = "SpotBot"
 MODEL = "SpotBot Evo"

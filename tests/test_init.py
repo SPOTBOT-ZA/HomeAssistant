@@ -124,6 +124,33 @@ def test_na_armed_response_is_not_applicable() -> None:
     assert cam.armed_response_on is True
 
 
+def test_conn_status_is_a_fault_code_not_a_flag() -> None:
+    """Only conn_status 0 means connected.
+
+    0 is "Fine" — the apps hide the indicator for it and draw something only
+    for 1 (warning), 2 (error) and anything unrecognised. Reading the field
+    as a boolean inverts the sensor and reports every healthy camera as
+    disconnected.
+    """
+    payload = json.loads(load_fixture("status.json"))["data"]
+
+    for code, connected in ((0, True), (1, False), (2, False), (7, False)):
+        payload["cam_status"][0]["conn_status"] = code
+        cam = SpotBotStatus.from_json(payload).cameras[0]
+        assert cam.connected is connected, f"conn_status {code}"
+        assert cam.conn_status == code
+
+    # Loose typing: the value may arrive as a string.
+    payload["cam_status"][0]["conn_status"] = "0"
+    assert SpotBotStatus.from_json(payload).cameras[0].connected is True
+
+    # Missing or unparseable: not connected, and no crash.
+    payload["cam_status"][0]["conn_status"] = "weird"
+    cam = SpotBotStatus.from_json(payload).cameras[0]
+    assert cam.connected is False
+    assert cam.conn_status is None
+
+
 def test_status_parses_cam_status_string() -> None:
     """cam_status arriving as a JSON-encoded string is coerced to a list."""
     payload = json.loads(load_fixture("status_cam_string.json"))["data"]
@@ -135,4 +162,5 @@ def test_status_parses_cam_status_string() -> None:
     assert cam.cam_nr == "1"
     assert cam.detection_on is False
     assert cam.armed_response_on is True
-    assert cam.connected is False
+    # That fixture carries conn_status 0, which is "Fine" — connected.
+    assert cam.connected is True
