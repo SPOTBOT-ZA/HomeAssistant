@@ -53,6 +53,7 @@ API_TIMEOUT = 30
 KEY_DETECTION = "detection"
 KEY_ARMED_RESPONSE = "armed_response"
 KEY_SNOOZE = "snooze"
+KEY_UNSNOOZE = "unsnooze"
 KEY_SPEAKER_MUTE = "speaker_mute"
 KEY_PANIC = "panic"
 KEY_ONLINE = "online"

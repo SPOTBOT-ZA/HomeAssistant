@@ -40,9 +40,6 @@
       "armed_response": {
         "name": "{camera} armed response"
       },
-      "snooze": {
-        "name": "Snooze"
-      },
       "speaker_mute": {
         "name": "Speaker mute"
       }
@@ -53,6 +50,12 @@
       }
     },
     "button": {
+      "snooze": {
+        "name": "Snooze"
+      },
+      "unsnooze": {
+        "name": "Unsnooze"
+      },
       "panic": {
         "name": "Panic"
       }

@@ -1,4 +1,9 @@
-"""Switch platform: per-camera detection & armed response, snooze, mute."""
+"""Switch platform: per-camera detection & armed response, speaker mute.
+
+Snooze is not here: it is a timed action that the device expires by itself,
+and the device-level snooze flag is never set (state lives per camera), so
+it ships as buttons on the button platform instead.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +13,7 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import KEY_ARMED_RESPONSE, KEY_DETECTION, KEY_SNOOZE, KEY_SPEAKER_MUTE
+from .const import KEY_ARMED_RESPONSE, KEY_DETECTION, KEY_SPEAKER_MUTE
 from .coordinator import SpotBotConfigEntry, SpotBotCoordinator
 from .entity import SpotBotEntity
 
@@ -28,7 +33,6 @@ async def async_setup_entry(
         for serial, data in (coordinator.data or {}).items():
             if (serial, "") not in known_cams:
                 known_cams.add((serial, ""))
-                new.append(SpotBotSnoozeSwitch(coordinator, serial))
                 new.append(SpotBotSpeakerMuteSwitch(coordinator, serial))
             for cam in data.status.cameras if data.status else []:
                 if (serial, cam.cam_nr) in known_cams:
@@ -105,30 +109,6 @@ class SpotBotArmedResponseSwitch(SpotBotEntity, SwitchEntity):
             lambda: self.coordinator.client.async_set_armed_response(
                 self._serial, self._cam_nr, False
             )
-        )
-
-
-class SpotBotSnoozeSwitch(SpotBotEntity, SwitchEntity):
-    """Device-wide snooze (POST snooze|unsnooze/all)."""
-
-    _attr_translation_key = KEY_SNOOZE
-
-    def __init__(self, coordinator: SpotBotCoordinator, serial: str) -> None:
-        super().__init__(coordinator, serial, KEY_SNOOZE)
-
-    @property
-    def is_on(self) -> bool | None:
-        data = self.device_data
-        return data.status.snoozed if data and data.status else None
-
-    async def async_turn_on(self, **kwargs: Any) -> None:
-        await self.coordinator.async_command(
-            lambda: self.coordinator.client.async_snooze(self._serial, "all")
-        )
-
-    async def async_turn_off(self, **kwargs: Any) -> None:
-        await self.coordinator.async_command(
-            lambda: self.coordinator.client.async_unsnooze(self._serial, "all")
         )
 
 
