@@ -9,7 +9,7 @@ from typing import Any, Awaitable, Callable
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import (
@@ -117,9 +117,17 @@ class SpotBotCoordinator(DataUpdateCoordinator[dict[str, SpotBotDeviceData]]):
         return {data.device.serial: data for data in results}
 
     async def async_command(self, command: Callable[[], Awaitable[Any]]) -> None:
-        """Run a device command, then refresh so state converges."""
+        """Run a device command, then refresh so state converges.
+
+        Everything the API can raise becomes a HomeAssistantError so the
+        failure reaches the user as the message it carries, rather than as
+        an "Unexpected exception" traceback in the log with nothing useful
+        in the UI. Only a dead token still means reauth.
+        """
         try:
             await command()
         except SpotBotAuthError as err:
             raise ConfigEntryAuthFailed(err) from err
+        except SpotBotApiError as err:
+            raise HomeAssistantError(str(err)) from err
         await self.async_request_refresh()

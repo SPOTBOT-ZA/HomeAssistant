@@ -48,6 +48,17 @@ class SpotBotPermissionError(SpotBotApiError):
     """The OAuth client's endpoint mask (epm) does not allow this endpoint."""
 
 
+class SpotBotDeviceRefusedError(SpotBotApiError):
+    """The device or gateway refused the command.
+
+    Distinct from SpotBotPermissionError: the route was allowed and the
+    token was fine — the RPC itself came back 401/403, which the gateway
+    reports as HTTP 403 with type ".../rpc_error". Usually the account's
+    access level on that particular device, so it is per-device and not
+    something the OAuth client can fix.
+    """
+
+
 class SpotBotDeviceOfflineError(SpotBotApiError):
     """The device did not answer over MQTT (HTTP 504)."""
 
@@ -248,7 +259,9 @@ class SpotBotApiClient:
                 if resp.status == 401:
                     raise SpotBotAuthError("401 unauthorized")
                 if resp.status == 403:
-                    raise await self._classify_403(token, path)
+                    raise await self._classify_403(
+                        token, path, await self._problem_json(resp)
+                    )
                 if resp.status == 404:
                     body = await self._problem_json(resp)
                     if "no_presence" in str(body.get("type", "")):
@@ -273,13 +286,49 @@ class SpotBotApiClient:
         except (ValueError, aiohttp.ClientError):
             return {}
 
-    async def _classify_403(self, token: str, path: str) -> SpotBotApiError:
-        """Disambiguate 403: expired/invalid token vs endpoint-mask denial.
+    async def _classify_403(
+        self, token: str, path: str, body: dict[str, Any] | None = None
+    ) -> SpotBotApiError:
+        """Disambiguate the three different things a 403 can mean.
 
-        The gateway returns 403 both for a bad/expired JWT and for an epm
-        (endpoint mask) denial. /oauth/userinfo succeeds for any valid token,
-        so it separates the two without side effects.
+        The gateway overloads 403, but its problem+json says which is which,
+        so read the body first:
+
+        - type ".../rpc_error", "Device returned an error" — the device or
+          gateway refused the RPC (index.php maps an RPC 401/403 to HTTP
+          403). Per-device, typically the account's access level on it.
+        - type ".../forbidden", "Endpoint not available" — the OAuth
+          client's endpoint mask really does deny the route.
+        - type ".../forbidden", "Invalid or expired token" — bad JWT.
+
+        Only when the body tells us nothing do we fall back to probing
+        /oauth/userinfo, which succeeds for any valid token and so separates
+        a live token from a dead one without side effects.
+
+        Getting this wrong is not harmless: every 403 used to be reported as
+        an endpoint-mask denial, which sent people to the management console
+        to widen a mask that was already correct.
         """
+        body = body or {}
+        err_type = str(body.get("type", ""))
+        title = str(body.get("title", ""))
+        detail = str(body.get("detail", "")).strip()
+
+        if "rpc_error" in err_type or title == "Device returned an error":
+            return SpotBotDeviceRefusedError(
+                f"The device refused {path}"
+                + (f": {detail}" if detail else "")
+                + " — this is the device's own authorization (check your "
+                "access level for it in the SpotBot app), not the OAuth client"
+            )
+        if title == "Endpoint not available":
+            return SpotBotPermissionError(
+                f"Endpoint mask denies {path}; adjust the OAuth client's "
+                "epm in the SpotBot management console"
+            )
+        if title == "Invalid or expired token":
+            return SpotBotAuthError(f"403 invalid or expired token on {path}")
+
         try:
             async with self._websession.get(
                 f"{self._base_url}/oauth/userinfo",
