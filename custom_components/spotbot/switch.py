@@ -26,6 +26,10 @@ async def async_setup_entry(
     """Set up SpotBot switches for every device and camera."""
     coordinator = entry.runtime_data
     known_cams: set[tuple[str, str]] = set()
+    # Tracked apart from known_cams: a camera reporting ar_onoff "NA" has no
+    # armed response, so it gets no switch — but it may be provisioned for
+    # one later, and then the entity should appear without a restart.
+    known_ar: set[tuple[str, str]] = set()
 
     @callback
     def add_new_entities() -> None:
@@ -35,11 +39,14 @@ async def async_setup_entry(
                 known_cams.add((serial, ""))
                 new.append(SpotBotSpeakerMuteSwitch(coordinator, serial))
             for cam in data.status.cameras if data.status else []:
-                if (serial, cam.cam_nr) in known_cams:
-                    continue
-                known_cams.add((serial, cam.cam_nr))
-                new.append(SpotBotDetectionSwitch(coordinator, serial, cam.cam_nr))
-                new.append(SpotBotArmedResponseSwitch(coordinator, serial, cam.cam_nr))
+                if (serial, cam.cam_nr) not in known_cams:
+                    known_cams.add((serial, cam.cam_nr))
+                    new.append(SpotBotDetectionSwitch(coordinator, serial, cam.cam_nr))
+                if cam.armed_response_supported and (serial, cam.cam_nr) not in known_ar:
+                    known_ar.add((serial, cam.cam_nr))
+                    new.append(
+                        SpotBotArmedResponseSwitch(coordinator, serial, cam.cam_nr)
+                    )
         if new:
             async_add_entities(new)
 
@@ -81,7 +88,13 @@ class SpotBotDetectionSwitch(SpotBotEntity, SwitchEntity):
 
 
 class SpotBotArmedResponseSwitch(SpotBotEntity, SwitchEntity):
-    """Armed response on/off per camera (POST ar_on|ar_off/{cam})."""
+    """Armed response on/off per camera (POST ar_on|ar_off/{cam}).
+
+    Only created for cameras that report a real ar_onoff value. A camera
+    that reports "NA" has no armed response at all and gets no entity; if
+    one that had it starts reporting "NA", the entity it already has goes
+    unavailable rather than sitting there reading off and no-opping.
+    """
 
     _attr_translation_key = KEY_ARMED_RESPONSE
 
@@ -91,6 +104,11 @@ class SpotBotArmedResponseSwitch(SpotBotEntity, SwitchEntity):
         self._attr_translation_placeholders = {
             "camera": cam.name if cam and cam.name else f"Camera {cam_nr}"
         }
+
+    @property
+    def available(self) -> bool:
+        cam = self.camera
+        return super().available and cam is not None and cam.armed_response_supported
 
     @property
     def is_on(self) -> bool | None:

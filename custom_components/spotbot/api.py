@@ -63,6 +63,19 @@ def _as_bool(value: Any) -> bool:
     return False
 
 
+def _is_applicable(value: Any) -> bool:
+    """False when a flag says the feature does not apply to this camera.
+
+    The API spells that "NA" (seen on ar_onoff). A missing or empty value is
+    treated the same way: there is nothing to control and nothing to show.
+    """
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return value.strip().upper() not in ("", "NA", "N/A", "NONE", "NULL")
+    return True
+
+
 @dataclass
 class SpotBotDevice:
     """One row of GET /api/v2/account/devices."""
@@ -98,20 +111,27 @@ class SpotBotCamera:
     name: str
     detection_on: bool
     armed_response_on: bool
+    # False when the camera reports ar_onoff as "NA": armed response is not
+    # provisioned for it, and no armed-response entity should exist. The
+    # device accepts /ar_on and /ar_off for such a camera and returns 200
+    # while changing nothing, so there is no way to tell from the command
+    # whether it took — only this field says so up front.
+    armed_response_supported: bool
     connected: bool
     snoozed: bool
     raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_json(cls, data: dict[str, Any]) -> SpotBotCamera:
+        ar = data.get("ar_onoff")
         return cls(
             cam_nr=str(data.get("camnr", "")),
             name=str(data.get("camname") or ""),
-            # TODO(live-verify): confirm onoff/ar_onoff truthy semantics
-            # against a real /status payload before release (values observed
-            # in the codebase: onoff as number, ar_onoff as number-or-string).
+            # Verified live: onoff is 0/1 as a number; ar_onoff is 0/1 as a
+            # number or the string "NA".
             detection_on=_as_bool(data.get("onoff")),
-            armed_response_on=_as_bool(data.get("ar_onoff")),
+            armed_response_on=_as_bool(ar),
+            armed_response_supported=_is_applicable(ar),
             connected=_as_bool(data.get("conn_status")),
             snoozed=_as_bool(data.get("snooze")),
             raw=data,
