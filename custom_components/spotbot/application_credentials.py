@@ -58,5 +58,5 @@ async def async_get_description_placeholders(hass: HomeAssistant) -> dict[str, s
     """Placeholders for the application credentials dialog text."""
     return {
         "oauth_url": DEFAULT_BASE_URL,
-        "docs_url": "https://github.com/GITHUB-ORG-TODO/SPOTBOT_HOMEASSISTANT/blob/main/docs/installation.md",
+        "docs_url": "https://github.com/SPOTBOT-ZA/HomeAssistant/blob/main/docs/installation.md",
     }

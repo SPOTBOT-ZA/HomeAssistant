@@ -12,7 +12,7 @@ Until the integration is accepted into the HACS default store, add it as a
 custom repository:
 
 1. HACS → three-dot menu (top right) → **Custom repositories**
-2. Repository: `https://github.com/GITHUB-ORG-TODO/SPOTBOT_HOMEASSISTANT`
+2. Repository: `https://github.com/SPOTBOT-ZA/HomeAssistant`
    — type **Integration** → **Add**
 3. Search for "SpotBot" in HACS, install it, and restart Home Assistant.
 
