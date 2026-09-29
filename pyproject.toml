@@ -1,6 +1,11 @@
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+# The tests import `custom_components.spotbot`, so the repo root has to be on
+# sys.path. `python -m pytest` puts it there implicitly and bare `pytest` does
+# not — CI runs the latter, so without this the suite cannot even load
+# conftest, while passing locally.
+pythonpath = ["."]
 
 [tool.ruff]
 target-version = "py313"
