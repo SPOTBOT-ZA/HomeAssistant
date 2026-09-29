@@ -16,16 +16,17 @@ Goal: users find "SpotBot" in HACS search without adding a custom repo.
 
 Checklist (from hacs.xyz/docs/publish):
 
-- [ ] Public GitHub repo with **description**, **topics**, and **Issues
-      enabled**
-- [ ] `hacs.json` with at least `name` ✔ (in repo)
-- [ ] README with usage docs ✔
-- [ ] **At least one GitHub Release** (not just a tag) — created by
-      `release.yml` on tag push ✔ (mechanism in place)
-- [ ] **HACS Action** and **hassfest** pass without errors
-      (`.github/workflows/validate.yml` ✔ — must be green on the mirror)
-- [ ] Brand icon available (inline `brand/` ✔, or home-assistant/brands —
-      below)
+- [x] Public GitHub repo with **description**, **topics**, and **Issues
+      enabled** — `SPOTBOT-ZA/HomeAssistant`, public 2026-09-29
+- [x] `hacs.json` with at least `name`
+- [x] README with usage docs
+- [x] **At least one GitHub Release** (not just a tag) — `v0.1.0`, created by
+      `release.yml` from the tag
+- [x] **HACS Action** and **hassfest** pass without errors — 9/9 green on the
+      mirror. They only pass on a *public* repo: while it was private the
+      action could not fetch files, and `integration_manifest` and `hacsjson`
+      failed with "Got None" although both files were fine.
+- [x] Brand icon — inline `brand/`; see Stage 2, nothing to submit
 - [ ] Submit a PR to `https://github.com/hacs/default` adding the repo URL to
       the `integration` file, **alphabetically sorted**, from a branch off
       `master`, **submitted by the repo owner or a major contributor's
@@ -35,18 +36,35 @@ Expect review to take **months**; the integration stays installable as a
 custom repository meanwhile. Alpha/beta-stage integrations are excluded —
 submit once v1 is stable.
 
-## Stage 2 — home-assistant/brands
+## Stage 2 — home-assistant/brands — **nothing to do, do not submit**
 
-The integration ships its own icons inline
-(`custom_components/spotbot/brand/icon.png` 256×256 + `icon@2x.png` 512×512,
-rendered from `blueicon.svg`), which HA ≥ 2026.3 serves through the brands
-proxy. A submission to `https://github.com/home-assistant/brands` is still
-worthwhile so users on older HA (and some HACS UI surfaces) see the logo:
+Icons are already handled. The integration ships them inline —
+`custom_components/spotbot/brand/icon.png` (256×256) and `icon@2x.png`
+(512×512), rendered from `blueicon.svg` — and Home Assistant serves those
+through the brands proxy from **2026.3.0** onward, which is the floor
+`hacs.json` sets. Every user who can run this integration gets the icon.
 
-- PR adding `custom_integrations/spotbot/` containing `icon.png` (256×256)
-  and `icon@2x.png` (512×512); optionally `logo.png`/`logo@2x.png`
-  (landscape, shortest side ≥128/≥256 px) and `dark_*` variants.
-- The folder name must exactly match the manifest `domain` (`spotbot`).
+**`home-assistant/brands` no longer accepts custom-integration icons.** A PR
+there is closed automatically within seconds:
+
+> we no longer accept brand icons for custom integrations in this
+> repository. Starting with Home Assistant 2026.3.0, custom integrations can
+> provide their own brand icons directly
+
+See the [brands proxy API
+announcement](https://developers.home-assistant.io/blog/2026/02/24/brands-proxy-api)
+(2026-02-24).
+
+This section previously recommended submitting anyway, "so users on older HA
+see the logo". That was wrong twice over: the submission is refused, and
+`hacs.json` requires 2026.3.0, so there are no older users to serve. It was
+acted on — [home-assistant/brands#11251](https://github.com/home-assistant/brands/pull/11251),
+opened and bot-closed on 2026-09-29 — which is why it is spelled out here
+rather than quietly deleted.
+
+The only thing to keep in mind: the icons must stay where they are, and the
+folder name `brand/` and the manifest `domain` (`spotbot`) must keep
+matching.
 
 ## Stage 3 — core integration (long-term option)
 
