@@ -3,7 +3,7 @@
 ## Source of truth & mirror
 
 Development happens on the self-hosted Gitea:
-`http://thinkstation.local:3000/SPOTBOT/SPOTBOT_HOMEASSISTANT` (also checked
+`http://thinkstation.local:3000/SPOTBOT/HomeAssistant` (also checked
 out as the `HOMEASSISTANT/` submodule of `SPOTBOT_APP`). A public GitHub
 mirror serves HACS and runs CI — see [mirroring.md](mirroring.md). Never
 commit anything secret: everything on `main` becomes public via the mirror.

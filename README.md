@@ -61,7 +61,7 @@ the integration registers its own OAuth client.
 ## Repository layout
 
 This repo is developed on a self-hosted Gitea
-(`SPOTBOT/SPOTBOT_HOMEASSISTANT`, also vendored as the `HOMEASSISTANT/`
+(`SPOTBOT/HomeAssistant`, also vendored as the `HOMEASSISTANT/`
 submodule of `SPOTBOT_APP`) and mirrored to public GitHub for HACS and CI.
 GitHub Actions run **on the mirror only**: hassfest + HACS validation, pytest,
 and automatic GitHub Releases from `v*` tags.

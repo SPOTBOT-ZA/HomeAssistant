@@ -5,10 +5,17 @@ HACS only installs from **public GitHub repositories**, and GitHub Actions
 repo stays the source of truth; a push-mirror keeps a public GitHub clone in
 sync.
 
-> Done: the mirror is [SPOTBOT-ZA/HomeAssistant](https://github.com/SPOTBOT-ZA/HomeAssistant).
-> Note the repo name is **`HomeAssistant`**, not `SPOTBOT_HOMEASSISTANT` as
-> this doc originally planned. It must be **public** for HACS to install from
-> it; the org's other repos need not be.
+> Done: the mirror is [SPOTBOT-ZA/HomeAssistant](https://github.com/SPOTBOT-ZA/HomeAssistant),
+> public since 2026-09-29 — HACS can only install from a public repo. The
+> org's other repos (`SPOTBOT_APP`, `SPOTBOT_API`, `SPOTBOT_FLUTTER`) are
+> private company code and stay that way.
+>
+> The repo is named **`HomeAssistant`** on both hosts. It was originally
+> `SPOTBOT_HOMEASSISTANT` on Gitea and was renamed to match, so that
+> `SPOTBOT_APP` can use **relative submodule URLs** (`../HomeAssistant.git`)
+> that resolve to Gitea or GitHub depending on where the superproject was
+> cloned from. The public name is the one advertised to HACS users, so it is
+> the one that won.
 
 ## One-time setup
 
@@ -19,7 +26,7 @@ sync.
    *Contents: Read and write* permission.
 3. **Configure the push mirror in Gitea**: repo → Settings → Repository →
    Mirror Settings → *Push mirror*:
-   - Git remote: `https://github.com/<org>/SPOTBOT_HOMEASSISTANT.git`
+   - Git remote: `https://github.com/SPOTBOT-ZA/HomeAssistant.git`
    - Username: the GitHub account name; Password: the PAT
    - Enable **"Sync when commits are pushed"** (plus the default 8 h interval)
 4. Push `main` on Gitea and confirm the mirror shows up on GitHub, then set
