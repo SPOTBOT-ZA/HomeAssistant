@@ -8,6 +8,36 @@ out as the `HOMEASSISTANT/` submodule of `SPOTBOT_APP`). A public GitHub
 mirror serves HACS and runs CI — see [mirroring.md](mirroring.md). Never
 commit anything secret: everything on `main` becomes public via the mirror.
 
+## The API client library (`lib/SPOTBOT_API_CLIENT`)
+
+A submodule holding [`spotbot-api-client`](http://thinkstation.local:3000/SPOTBOT/SPOTBOT_API_CLIENT),
+the client half of `custom_components/spotbot/api.py` packaged on its own.
+
+**Nothing uses it yet.** The integration still carries its own `api.py`, and
+the submodule is checked out for source management only — Home Assistant
+loads the integration from `custom_components/`, so a directory in the repo
+is not importable at runtime. When the switch happens, the integration drops
+`api.py`, lists `spotbot-api-client==x.y.z` in `manifest.json`'s
+`requirements`, and Home Assistant pip-installs it from PyPI like any other
+dependency.
+
+It exists because **Home Assistant core requires an integration's API client
+to live in a published library** with its own issue tracker. For the HACS
+default store it is not required at all — the client may stay in
+`custom_components/`. So this is preparation for a decision not yet taken;
+see [registration.md](registration.md) stage 3.
+
+Two consequences worth knowing:
+
+- The library repo is **private** while this one is public, so `.gitmodules`
+  on the public mirror points at a repo strangers cannot read and
+  `clone --recurse-submodules` fails for them. Harmless for users: HACS
+  downloads `custom_components/spotbot/` only, never the whole repo.
+- Publishing to PyPI makes the package contents public regardless of the
+  repo's visibility. That exposes nothing new — every route, payload shape
+  and the client secret are already in this repo's `api.py` — but the
+  server (`SPOTBOT_API`) is not in the library and stays private.
+
 ## Targeting a deployment
 
 All OAuth/API URLs derive from one constant:
