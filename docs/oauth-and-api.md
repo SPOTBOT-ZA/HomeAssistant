@@ -125,7 +125,10 @@ the whole time.
   `GET /devices/{serial}/presence`, `POST /devices/{serial}/on|off/{cam|all}`,
   `POST /devices/{serial}/ar_on|ar_off/{cam|all}`,
   `POST /devices/{serial}/snooze|unsnooze/{cam|all}`,
-  `POST /devices/{serial}/speaker_mute`, `POST /devices/{serial}/panic`.
+  `POST /devices/{serial}/speaker_mute`, `POST /devices/{serial}/users/sync`.
+  `POST /devices/{serial}/panic` is deliberately **not** used: the panic
+  button was removed, since a UI control that dispatches a real armed
+  response is too easy to press by accident.
 - **There is no message/image history endpoint** in the REST API today (the
   legacy `get_messages_for_spotbots` function exists server-side but is not
   exposed) — see [roadmap](roadmap.md).

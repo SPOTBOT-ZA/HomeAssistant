@@ -63,7 +63,7 @@ async def test_setup_and_unload(
     assert len(hass.states.async_entity_ids("switch")) == 3
     # device online + camera connectivity + camera snoozed
     assert len(hass.states.async_entity_ids("binary_sensor")) == 3
-    # snooze + unsnooze; panic is disabled by default, so it has no state
+    # snooze + unsnooze
     assert len(hass.states.async_entity_ids("button")) == 2
 
     assert await hass.config_entries.async_unload(config_entry.entry_id)

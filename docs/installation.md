@@ -52,8 +52,6 @@ Per SpotBot device:
   and Unsnooze resumes them early.
 - **Binary sensors** (diagnostic) — device *online*, per-camera *connectivity*
   and *snoozed* (carrying the time the snooze runs until)
-- **Button** — *Panic* (**disabled by default**; enable it consciously in the
-  entity settings — it triggers a real armed-response chain)
 
 Cameras without armed response get no armed-response switch. The SpotBot
 reports those as `"NA"`, and the API accepts an arm/disarm command for them

@@ -439,9 +439,6 @@ class SpotBotApiClient:
             json={"todo": "1" if muted else "0"},
         )
 
-    async def async_panic(self, serial: str) -> None:
-        await self._request("POST", f"/devices/{serial}/panic")
-
     async def async_sync_users(self, serial: str, device_id: str, sb_id: str) -> None:
         """Tell the device to refresh its user database from the server.
 

@@ -68,7 +68,6 @@ then request a coordinator refresh so state converges.
 | — | `button` "Snooze" / "Unsnooze" per device | `POST /snooze|unsnooze/all`. Buttons, not a switch: snooze is timed and the device expires it by itself. A press uses the server's default hour — the route's `time` field has no equivalent on a button |
 | `status` → `cam_status[].snooze`, `snoozed_until` | `binary_sensor` "{camera} snoozed" (diagnostic) | The **per-camera** snooze state, and the only one that is real: the device-level `status.snooze` is `"false"` on every device observed, even with cameras snoozed, so the old device-wide Snooze switch could never report the truth. Read-only — the Snooze/Unsnooze buttons act. `snoozed_until` is a wall-clock `"HH:MM"` with no date, so it is an attribute rather than a guessed timestamp |
 | `status` → `Mute_status` | `switch` "Speaker mute" per device | `POST /speaker_mute` |
-| — | `button` "Panic" per device | `POST /panic`; **disabled by default** (it triggers a real armed-response chain) |
 
 All other entities go through the normal availability rule: unavailable while
 the device is offline.

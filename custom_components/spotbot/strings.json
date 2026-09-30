@@ -58,9 +58,6 @@
       },
       "unsnooze": {
         "name": "Unsnooze"
-      },
-      "panic": {
-        "name": "Panic"
       }
     }
   }
