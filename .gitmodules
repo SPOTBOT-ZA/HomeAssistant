@@ -1,4 +1,0 @@
-[submodule "lib/SPOTBOT_API_CLIENT"]
-	path = lib/SPOTBOT_API_CLIENT
-	url = ../SPOTBOT_API_CLIENT.git
-	branch = main
