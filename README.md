@@ -24,7 +24,6 @@ Home Assistant.
 | Online | binary_sensor (diagnostic) | device |
 | Camera connectivity | binary_sensor (diagnostic) | camera |
 | Snoozed | binary_sensor (diagnostic), with `snoozed_until` | camera |
-| Panic | button (**disabled by default** — triggers a real armed response) | device |
 
 Two of those need a word of explanation:
 
@@ -36,30 +35,6 @@ Two of those need a word of explanation:
   reports `ar_onoff: "NA"` is not provisioned for armed response and gets no
   entity — it would otherwise read *off* and silently do nothing, since the
   API accepts the command and returns success while the device ignores it.
-
-## The SpotBot card
-
-The integration ships a Lovelace card shaped like the card in the SpotBot
-app: a header that follows the device's reachability, numbered camera
-indicators coloured by detection, a second row for armed response, the
-snoozed cameras with the time each snooze runs out, and the snooze controls.
-Camera indicators are clickable — they toggle that camera.
-
-It is served by the integration itself, so there is nothing to install or
-register. Add a Manual card and give it the device slug:
-
-```yaml
-type: custom:spotbot-card
-device: spotbot_bosplaas
-```
-
-The slug is the entity-id prefix the integration uses for that SpotBot —
-`binary_sensor.spotbot_bosplaas_connectivity` means `spotbot_bosplaas`.
-
-Cameras reporting a connectivity fault show a warning or no-video icon in
-place of their number, as the apps do. There is no last-detection preview:
-the REST API exposes no messages endpoint, so Home Assistant never sees
-them — see [roadmap](docs/roadmap.md).
 
 ## Installation
 

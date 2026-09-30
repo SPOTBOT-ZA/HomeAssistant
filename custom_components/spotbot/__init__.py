@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from pathlib import Path
 
 import aiohttp
 
-from homeassistant.components.frontend import add_extra_js_url
-from homeassistant.components.http import StaticPathConfig
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
@@ -38,50 +35,11 @@ _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-CARD_FILENAME = "spotbot-card.js"
-CARD_URL_BASE = f"/{DOMAIN}_static"
-CARD_REGISTERED = f"{DOMAIN}_card_registered"
-
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.BUTTON,
     Platform.SWITCH,
 ]
-
-
-async def _async_register_card(hass: HomeAssistant) -> None:
-    """Serve the Lovelace card that ships with the integration.
-
-    The card lives here rather than in a separate HACS "Dashboard" repo so
-    it installs, versions and updates with the integration — a card that is
-    useless without this integration should not be a second thing to keep in
-    step. The cost is that it does not appear in HACS's Dashboard section.
-
-    Registering the static path is idempotent-ish but not free, so it is
-    guarded: async_setup runs once, yet a reload should not stack URLs.
-    """
-    if hass.data.get(CARD_REGISTERED):
-        return
-    card_dir = Path(__file__).parent / "www"
-    if not (card_dir / CARD_FILENAME).is_file():
-        _LOGGER.debug("No card bundled at %s; skipping", card_dir)
-        return
-    try:
-        await hass.http.async_register_static_paths(
-            [StaticPathConfig(CARD_URL_BASE, str(card_dir), cache_headers=False)]
-        )
-    except RuntimeError as err:
-        # aiohttp refuses new routes once the app has started. Home Assistant
-        # normally defuses that — HomeAssistantHTTP.start() replaces
-        # router.freeze with a no-op precisely so components discovered after
-        # boot can register — but a harness that never starts the server (the
-        # test harness does not) still hits it. A missing card is a cosmetic
-        # loss; taking setup down over it would not be.
-        _LOGGER.debug("Could not serve the SpotBot card: %s", err)
-        return
-    add_extra_js_url(hass, f"{CARD_URL_BASE}/{CARD_FILENAME}")
-    hass.data[CARD_REGISTERED] = True
-    _LOGGER.debug("Registered the SpotBot card at %s", CARD_URL_BASE)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -93,7 +51,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     an implementation to use.
     """
     await async_ensure_client_credential(hass)
-    await _async_register_card(hass)
     return True
 
 
